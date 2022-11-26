@@ -21,7 +21,7 @@ class Party
 {
 public:
     Party(int id, string name, int mandates, JoinPolicy *); 
-
+    Party();
     State getState() const;
     void setState(State state);
     int getMandates() const;
@@ -29,12 +29,14 @@ public:
     void step(Simulation &s);
     const string &getName() const;
     int timer;
-    void recieveOffer(Agent *agent);
+    void recieveOffer(Agent &agent);
     virtual ~Party();//destructor
     Party(const Party &other);//copy constractor
     Party(Party&& other);
     Party& operator=(const Party &other);
     Party& operator=(Party &&other);
+    int getPolicy() const;
+    void closeState();
 
 private:
     int mId;

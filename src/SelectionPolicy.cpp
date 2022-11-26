@@ -5,7 +5,7 @@
 
 using std::string;
 
-Party MandatesSelectionPolicy::Choose(Party &aParty, Party &bParty,int edgeWeight1,int edgeWeight2)
+Party MandatesSelectionPolicy::Choose(Party aParty, Party bParty,int edgeWeight1,int edgeWeight2)
 {
     if (aParty.getMandates() > bParty.getMandates())
     {
@@ -38,7 +38,7 @@ int EdgeWeightSelectionPolicy::whichPolicy()
     return 2;
 }
 
-Party EdgeWeightSelectionPolicy::Choose(Party &aParty, Party &bParty,int edgeWeight1,int edgeWeight2)
+Party EdgeWeightSelectionPolicy::Choose(Party aParty, Party bParty,int edgeWeight1,int edgeWeight2)
 {
     if (edgeWeight1>edgeWeight2)
     {

@@ -6,7 +6,7 @@ using std::string;
 
 Agent MandatesJoinPolicy::Choose(Agent &aAgent, Agent &bAgent)
 {
-    if (aAgent.agentCoalition.getTotalMandates()< bAgent.agentCoalition.getTotalMandates())
+    if (aAgent.getAgentCoalition().getTotalMandates()< bAgent.getAgentCoalition().getTotalMandates())
     {
         return bAgent;
     }

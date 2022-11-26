@@ -7,14 +7,14 @@ class SelectionPolicy
 {
     public:
         virtual ~SelectionPolicy() = default;
-        virtual Party Choose(Party &aParty,Party &bParty,int edgeWeight1,int edgeWeight2)=0;  
+        virtual Party Choose(Party aParty,Party bParty,int edgeWeight1,int edgeWeight2)=0;  
         virtual int whichPolicy()=0;  
 };
 
 class MandatesSelectionPolicy : public SelectionPolicy 
 {
     public:
-        Party Choose(Party &aParty,Party &bParty,int edgeWeight1,int edgeWeight2) override;
+        Party Choose(Party aParty,Party bParty,int edgeWeight1,int edgeWeight2) override;
         int whichPolicy() override;
     
 };
@@ -22,6 +22,6 @@ class MandatesSelectionPolicy : public SelectionPolicy
 class EdgeWeightSelectionPolicy : public SelectionPolicy 
 {
     public:
-        Party Choose(Party &aParty,Party &bParty,int edgeWeight1,int edgeWeight2) override;
+        Party Choose(Party aParty,Party bParty,int edgeWeight1,int edgeWeight2) override;
         virtual int whichPolicy() override;
 };

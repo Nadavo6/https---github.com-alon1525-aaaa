@@ -18,17 +18,17 @@ int Graph::getMandates(int partyId) const
 
 vector<Party> Graph::getmVertices() const{return mVertices;}
 
-const std::vector<std::pair<int,Party>> Graph::getNeighboors(Party curr) const
+std::vector<std::pair<int, int>> Graph::getNeighbors(Party curr)
 {
-    std::vector<std::pair<int,Party>> a = std::vector<std::pair<int,Party>>();
-    for(Party ver : mVertices)
+    std::vector<std::pair<int, int>> a;
+    for( Party &ver : mVertices)
     {
         if (ver.getmId() != curr.getmId())
         {
             int edgeWeight = getEdgeWeight(curr.getmId(),ver.getmId());
             if (edgeWeight>0)
             {
-                a.push_back(std::pair<int,Party>(edgeWeight,ver));
+                a.push_back(std::pair<int, int>(edgeWeight,ver.getmId()));
             }
             
         }
@@ -49,6 +49,10 @@ int Graph::getNumVertices() const
 }
 
 const Party &Graph::getParty(int partyId) const
+{
+    return mVertices[partyId];
+}
+Party &Graph::getParty2(int partyId) 
 {
     return mVertices[partyId];
 }

@@ -3,7 +3,12 @@
 #include "Agent.h"
 #include "JoinPolicy.h"
 
-Party::Party(int id, string name, int mandates, JoinPolicy *jp) : timer(0),mId(id), mName(name), mMandates(mandates), mJoinPolicy(jp), mState(Waiting),  bestOfferedAgent(nullptr)
+Party::Party(int id, string name, int mandates, JoinPolicy *jp) : timer(0),mId(id), mName(name), mMandates(mandates), mJoinPolicy(jp), mState(Waiting),  bestOfferedAgent(new Agent())
+{
+    // You can change the implementation of the constructor, but not the signature!
+}
+
+Party::Party() : timer(0),mId(99), mName("name"), mMandates(0), mJoinPolicy(new MandatesJoinPolicy), mState(Waiting),  bestOfferedAgent(new Agent())
 {
     // You can change the implementation of the constructor, but not the signature!
 }
@@ -28,6 +33,11 @@ int Party::getmId() const
     return mId;
 }
 
+int Party::getPolicy() const
+{
+    return mJoinPolicy->whichPolicy();
+}
+
 const string &Party::getName() const
 {
     return mName;
@@ -37,11 +47,9 @@ Party::~Party()
 {
     if (mJoinPolicy)
         delete mJoinPolicy;
-    if (bestOfferedAgent)
-        delete bestOfferedAgent;
 }
 
-Party::Party(const Party &other) : timer(other.timer),mId(other.mId), mName(other.mName), mMandates(other.mMandates), mJoinPolicy(), mState(other.mState),  bestOfferedAgent(new Agent(*(other.bestOfferedAgent)))
+Party::Party(const Party &other) : timer(other.timer),mId(other.mId), mName(other.mName), mMandates(other.mMandates), mJoinPolicy(), mState(other.mState),  bestOfferedAgent(other.bestOfferedAgent)
 {
     if (other.mJoinPolicy->whichPolicy() == 1)
     {
@@ -52,6 +60,8 @@ Party::Party(const Party &other) : timer(other.timer),mId(other.mId), mName(othe
         mJoinPolicy = new LastOfferJoinPolicy;
     }
 }
+
+void Party::closeState(){mState = Joined;}
 
 Party::Party(Party &&other) : timer(other.timer),mId(other.mId), mName(other.mName), mMandates(other.mMandates), mJoinPolicy(other.mJoinPolicy), mState(other.mState),  bestOfferedAgent(other.bestOfferedAgent)
 {
@@ -91,16 +101,16 @@ Party &Party::operator=(Party &&other)
     return *this;
 }
 
-void Party::recieveOffer(Agent *agent)
+void Party::recieveOffer(Agent &agent)
 {
     if (mState == Waiting)
     {
         mState = CollectingOffers;
-        bestOfferedAgent = agent;
+        *bestOfferedAgent = agent;
     }
     else if (mState == CollectingOffers)
     {
-        *bestOfferedAgent = (*mJoinPolicy).Choose(*bestOfferedAgent, *agent); // to ask how to write
+        *bestOfferedAgent = (*mJoinPolicy).Choose(*bestOfferedAgent, agent); // to ask how to write
     }
 }
 // we need to to RULE OF 5 here!!!
@@ -111,7 +121,7 @@ void Party::step(Simulation &s)
         timer++;
         if (timer == 3)
         {
-            bestOfferedAgent->agentCoalition.addParty(*this, s);
+            s.findCoalition(bestOfferedAgent->getPartyId()).addParty(*this, s);
         }
     }
 }

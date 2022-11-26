@@ -75,6 +75,7 @@ Graph Parser::parseGraph(const json &jGraph, const vector<Party> &parties)
 Simulation Parser::parseSimulation(const json &jSimulation)
 {
     // create agents list
+    
     vector<Agent> agents;
     for (unsigned int i = 0; i < jSimulation["agents"].size(); ++i)
         agents.push_back(parseAgent(jSimulation["agents"][i], i));
@@ -83,6 +84,7 @@ Simulation Parser::parseSimulation(const json &jSimulation)
     vector<Party> parties;
     for (unsigned int i = 0; i < jSimulation["parties"].size(); ++i)
         parties.push_back(parseParty(jSimulation["parties"][i], i));
+
 
     // change the state for the parties that are initialized with agent
     for (auto &agent : agents)

@@ -3,13 +3,19 @@
 #include "Coalition.h"
 #include <bits/stdc++.h>
 #include "SelectionPolicy.h"
+#include "Party.h"
+#include "queue"
 using namespace std;
 
 
-Agent::Agent(int agentId, int partyId, SelectionPolicy *selectionPolicy) : isOriginal(true),pickingOrder(),start(true),mAgentId(agentId), mPartyId(partyId), mSelectionPolicy(selectionPolicy),agentsParty(nullptr)
+
+Agent::Agent(int agentId, int partyId, SelectionPolicy *selectionPolicy) : pickingOrder(),neighbors(),start(true),agentsCoalition(Coalition(partyId,selectionPolicy)),mAgentId(agentId), mPartyId(partyId), mSelectionPolicy(selectionPolicy)
 {
     
 }
+
+Agent::Agent() : pickingOrder(),neighbors(),start(false),agentsCoalition(Coalition(mPartyId,new MandatesSelectionPolicy)),mAgentId(0), mPartyId(0), mSelectionPolicy(new MandatesSelectionPolicy){}
+
 
 int Agent::getSelectionPolicy() const{return mSelectionPolicy->whichPolicy();}
 
@@ -23,18 +29,14 @@ int Agent::getPartyId() const
     return mPartyId;
 }
 
-Party Agent::getParty() const
-{
-    return *agentsParty;
-}
+
 
 Agent::~Agent()
 {
     if(mSelectionPolicy) delete mSelectionPolicy;
-    if(agentsParty) delete agentsParty;
 }
-Agent::Agent(const Agent &other):isOriginal(other.isOriginal),pickingOrder(other.pickingOrder),start(other.start),mAgentId(other.mAgentId),mPartyId(other.mPartyId),
-mSelectionPolicy(),agentsParty(new Party(*(other.agentsParty)))
+Agent::Agent(const Agent &other):pickingOrder(other.pickingOrder),neighbors(other.neighbors),start(other.start),agentsCoalition(other.agentsCoalition),mAgentId(other.mAgentId),mPartyId(other.mPartyId),
+mSelectionPolicy()
 {
     if (other.mSelectionPolicy->whichPolicy() == 1)
     {
@@ -49,28 +51,28 @@ mSelectionPolicy(),agentsParty(new Party(*(other.agentsParty)))
 Agent& Agent::operator=(const Agent &other)
 {
     mAgentId = other.mAgentId;
-    mPartyId = other.mPartyId; 
+    mPartyId = other.mPartyId;
+    agentsCoalition = other.agentsCoalition;
+    neighbors = other.neighbors;
     start = other.start;
-    isOriginal = other.isOriginal;
     pickingOrder = other.pickingOrder;
-    *agentsParty = *(other.agentsParty);
     *mSelectionPolicy = *(other.mSelectionPolicy);
     return *this;
 }
 
-Agent::Agent(Agent&& other):isOriginal(other.isOriginal),pickingOrder(other.pickingOrder),start(other.start),mAgentId(other.mAgentId),mPartyId(other.mPartyId),
-mSelectionPolicy(other.mSelectionPolicy),agentsParty(other.agentsParty)
+Agent::Agent(Agent&& other):pickingOrder(other.pickingOrder),neighbors(other.neighbors),start(other.start),agentsCoalition(other.agentsCoalition),mAgentId(other.mAgentId),mPartyId(other.mPartyId),
+mSelectionPolicy(other.mSelectionPolicy)
 {
-    other.mSelectionPolicy = nullptr;
-    other.agentsParty = nullptr;   
+    other.mSelectionPolicy = nullptr; 
 }
 
 Agent& Agent::operator=(Agent &&other)
 {
     mAgentId = other.mAgentId;
     mPartyId = other.mPartyId;
+    agentsCoalition = other.agentsCoalition;
+    neighbors = other.neighbors;
     start = other.start;
-    isOriginal = other.isOriginal;
     pickingOrder = other.pickingOrder;
     if(mSelectionPolicy)
     {
@@ -78,42 +80,36 @@ Agent& Agent::operator=(Agent &&other)
     }
     mSelectionPolicy = other.mSelectionPolicy;
     other.mSelectionPolicy = nullptr;
-    if(agentsParty)
-    {
-        delete agentsParty;
-    }
-    agentsParty = other.agentsParty;
-    other.agentsParty = nullptr;   
+    
     return *this;
 }
+
+Coalition &Agent::getAgentCoalition(){return agentsCoalition;}
+
+SelectionPolicy* Agent::getSPType() const{return mSelectionPolicy;}
 
 void Agent::step(Simulation &sim)
 {
     if (start)
     {
-        *agentsParty = sim.getParty(mPartyId);
-        sim.addCoalition(agentCoalition);
         start = false;
-        if(isOriginal)
+        agentsCoalition = sim.findCoalition(mPartyId);
+        neighbors = sim.getGraph().getNeighbors(sim.getParty2(mPartyId));  
+        int neighborSize = neighbors.size(); 
+        for (int i = 1; i < neighborSize; i++)
         {
-            sim.addCoalition(Coalition(*this));
-        }
-        std::vector<std::pair<int,Party>> neighboors = sim.getGraph().getNeighboors(getParty());  
-        int neighboorSize = neighboors.size(); 
-        for (int i = 1; i < neighboorSize; i++)
-        {
-            std::pair<int,Party> value = neighboors[i];
-            while (i>0 && (*mSelectionPolicy).Choose(value.second,neighboors[i-1].second,value.first,neighboors[i-1].first).getmId() != value.second.getmId())
+            std::pair<int,int> value = neighbors[i];
+            while (i>0 && (*mSelectionPolicy).Choose(sim.getParty2(value.second),sim.getParty2(neighbors[i-1].second),value.first,neighbors[i-1].first).getmId() != value.second)
             {
-                neighboors[i] = neighboors[i-1];
+                neighbors[i] = neighbors[i-1];
                 i=i-1;
             }
-            neighboors[i] = value;
+            neighbors[i] = value;
             
         }
-        for(int i=(neighboorSize-1);i>=0;i++)
+        for(int i=(neighborSize-1);i>=0;i--)
         {
-            pickingOrder.push(neighboors[i].second);
+            pickingOrder.push(neighbors[i].second);
         }
 
         
@@ -122,16 +118,15 @@ void Agent::step(Simulation &sim)
     bool picked = false;
     while (pickingOrder.empty() == false && picked == false)
     {
-        Party nextParty = pickingOrder.front();
-        pickingOrder.pop();
-
-        if(nextParty.getState() != Joined && agentCoalition.hasBeenOffered(nextParty.getmId())==false)
+        
+        if(sim.getParty2(pickingOrder.front()).getState() != Joined && sim.findCoalition(mPartyId).hasBeenOffered(sim.getParty2(pickingOrder.front()).getmId())==false)
         {
             picked = true;
-            nextParty.recieveOffer(this);
+            sim.getParty2(pickingOrder.front()).recieveOffer(*this);
         }
+        sim.findCoalition(mPartyId).addOfferedParty(sim.getParty2(pickingOrder.front()).getmId());
+        pickingOrder.pop();
     }
     
-
     
 }

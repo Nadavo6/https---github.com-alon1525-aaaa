@@ -32,9 +32,9 @@ public:
     void recieveOffer(Agent &agent);
     virtual ~Party();//destructor
     Party(const Party &other);//copy constractor
-    Party(Party&& other);
-    Party& operator=(const Party &other);
-    Party& operator=(Party &&other);
+    Party(Party&& other);//move copy constuctor
+    Party& operator=(const Party &other);//assignment operator
+    Party& operator=(Party &&other);//move assignment operator
     int getPolicy() const;
     void closeState();
 

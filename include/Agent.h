@@ -21,9 +21,9 @@ public:
     Party getParty() const;
     virtual ~Agent();//destructor
     Agent(const Agent &other);//copy constractor
-    Agent(Agent&& other);
-    Agent& operator=(const Agent &other);
-    Agent& operator=(Agent &&other);
+    Agent(Agent&& other);//move copy constuctor
+    Agent& operator=(const Agent &other);//assignment operator
+    Agent& operator=(Agent &&other);//move assignment operator
     std::queue<int> pickingOrder;
     int getSelectionPolicy() const;
     SelectionPolicy* getSPType() const;
